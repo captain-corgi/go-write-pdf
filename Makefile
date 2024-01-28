@@ -1,3 +1,5 @@
+all: run1
+
 run:
 	go run cmd/jungkurt/main.go
 
@@ -7,3 +9,6 @@ run1:
 tidy:
 	go mod tidy
 	go mod vendor
+
+clean:
+	rm output/*

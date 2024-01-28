@@ -4,80 +4,64 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/captain-corgi/go-write-pdf/pkg/kpdf"
 	"github.com/signintech/gopdf"
 )
 
+func main() {
+	outputPath := "./output/output_gopdf.pdf"
+	outputPathChatGpt := "./output/output_gopdf_chatgpt.pdf"
+
+	err := kpdf.GeneratePDFNew(outputPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = generatePDF(outputPathChatGpt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("PDF created successfully at:", outputPath)
+}
+
 func generatePDF(outputPath string) error {
 	pdf := gopdf.GoPdf{}
-	pdf.Start(gopdf.Config{PageSize: gopdf.Rect{W: 595.276, H: 841.890}}) // A4 dimensions in points
+	pdf.Start(gopdf.Config{PageSize: gopdf.Rect{W: 595.276, H: 841.890}})
 	pdf.AddPage()
-
-	// Set font for the title
-	pdf.AddTTFFont("Arial", "./font/arial.ttf")
-	pdf.SetFont("Arial", "B", 16)
-
-	// Add a big title at the top of the page
-	title := "My Big Title"
-	pdf.SetX(20)
-	pdf.SetY(20)
-	pdf.Cell(gopdf.PageSizeA4, title)
 
 	// Set font for the table
 	pdf.AddTTFFont("Arial", "./font/arial.ttf")
 	pdf.SetFont("Arial", "", 12)
 
-	// Add table headers
-	pdf.SetFillColor(200, 220, 255)
-	pdf.SetTextColor(0, 0, 0)
-	pdf.SetLineWidth(0.1)
+	// Draw table headers
+	drawCell(&pdf, 20, 60, 100, 30, "Header 1")
+	drawCell(&pdf, 120, 60, 100, 30, "Header 2")
+	drawCell(&pdf, 220, 60, 100, 30, "Header 3")
 
-	headers := []string{"Date", "Column 2", "Column 3", "Column 4"}
-	colWidths := calculateColumnWidthsGopdf(&pdf, headers)
+	// Draw regular cells
+	drawCell(&pdf, 20, 90, 100, 30, "Data 1")
+	drawCell(&pdf, 120, 90, 100, 30, "Data 2")
 
-	// Calculate left margin to center the table
-	leftMargin := 20
+	// Merge down effect (draw the merged cell that spans down)
+	drawMergedDownCell(&pdf, 220, 90, 100, 60, "Merged Down Cell", 2)
 
-	for i, header := range headers {
-		pdf.RectFromUpperLeftWithStyle(float64(leftMargin), 60, colWidths[i], 15, "fill:rgb(200,200,200);stroke:rgb(0,0,0)")
-		pdf.SetX(float64(leftMargin + 5))
-		pdf.SetY(65)
-		pdf.Cell(nil, header)
-		leftMargin += int(colWidths[i]) // Adjust for cell width
-	}
+	// Draw additional regular cells
+	drawCell(&pdf, 20, 120, 100, 30, "Data 3")
+	drawCell(&pdf, 120, 120, 100, 30, "Data 4")
+	drawCell(&pdf, 220, 150, 100, 30, "Data 5")
 
-	// Add table data with 100 rows
-	data := make([][]string, 100)
-	for i := 0; i < 100; i++ {
-		data[i] = []string{
-			fmt.Sprintf("Data %d", i+1),
-			fmt.Sprintf("Data %d", i+2),
-			fmt.Sprintf("Data %d", i+3),
-			fmt.Sprintf("Data %d", i+4),
-		}
-	}
+	// Draw three more rows
+	drawCell(&pdf, 20, 180, 100, 30, "Data 6")
+	drawCell(&pdf, 120, 180, 100, 30, "Data 7")
+	drawCell(&pdf, 220, 180, 100, 30, "Data 8")
 
-	pdf.SetFillColor(255, 255, 255)
-	pdf.SetTextColor(0, 0, 0)
+	// Merge cells in the middle of the table
+	drawMergedCell(&pdf, 120, 210, 100, 60, "Merged Cell", 2)
 
-	y := 80
-	for _, row := range data {
-		leftMargin = 20
-		for i, value := range row {
-			pdf.RectFromUpperLeftWithStyle(float64(leftMargin), float64(y), colWidths[i], 15, "fill:none;stroke:rgb(0,0,0)")
-			pdf.SetX(float64(leftMargin + 5))
-			pdf.SetY(float64(y + 5))
-			pdf.Cell(nil, value)
-			leftMargin += int(colWidths[i]) // Adjust for cell width
-		}
-		y += 15 // Adjust for line height
-	}
-
-	// Add a signing row at the bottom of the page
-	y += 20 // Add space between the table and signing row
-	signingText := "Signed by: ____________________"
-	pdf.SetX(20)
-	pdf.SetY(float64(y))
-	pdf.Cell(nil, signingText)
+	// Draw additional regular cells
+	drawCell(&pdf, 20, 240, 100, 30, "Data 9")
+	drawCell(&pdf, 220, 240, 100, 30, "Data 10")
 
 	// Save the PDF to the specified output path
 	err := pdf.WritePdf(outputPath)
@@ -88,22 +72,32 @@ func generatePDF(outputPath string) error {
 	return nil
 }
 
-func calculateColumnWidthsGopdf(pdf *gopdf.GoPdf, headers []string) []float64 {
-	colWidths := make([]float64, len(headers))
-	for i, header := range headers {
-		width, _ := pdf.MeasureTextWidth(header)
-		colWidths[i] = width + 10 // Add padding
+func drawMergedCell(pdf *gopdf.GoPdf, x, y, width, height float64, text string, colspan int) {
+	// Draw the merged cell as a single rectangle
+	pdf.RectFromUpperLeft(x, y, width, height)
+	pdf.SetX(x + 5)
+	pdf.SetY(y + 5)
+	pdf.Cell(nil, text)
+
+	// Draw vertical lines to separate the merged cells
+	for i := 1; i < colspan; i++ {
+		lineX := x + (float64(i) * width / float64(colspan))
+		pdf.Line(lineX, y, lineX, y+height)
 	}
-	return colWidths
 }
 
-func main() {
-	outputPath := "./output/output_gopdf.pdf"
+func drawCell(pdf *gopdf.GoPdf, x, y, width, height float64, text string) {
+	pdf.RectFromUpperLeft(x, y, width, height)
+	pdf.SetX(x + 5)
+	pdf.SetY(y + 5)
+	pdf.Cell(nil, text)
+}
 
-	err := generatePDF(outputPath)
-	if err != nil {
-		log.Fatal(err)
-	}
+func drawMergedDownCell(pdf *gopdf.GoPdf, x, y, width, height float64, text string, rowspan int) {
+	// Draw the merged cell as a single rectangle
+	pdf.RectFromUpperLeft(x, y, width, height)
+	pdf.SetX(x + 5)
+	pdf.SetY(y + 5)
+	pdf.Cell(nil, text)
 
-	fmt.Println("PDF created successfully at:", outputPath)
 }
