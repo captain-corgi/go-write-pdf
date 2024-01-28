@@ -1,4 +1,7 @@
-all: run1
+all: app
+
+app:
+	go run cmd/app/main.go
 
 run:
 	go run cmd/jungkurt/main.go
