@@ -18,6 +18,7 @@ github.com/unidoc/unioffice/algo
 github.com/unidoc/unioffice/color
 github.com/unidoc/unioffice/common
 github.com/unidoc/unioffice/common/axcontrol
+github.com/unidoc/unioffice/common/license
 github.com/unidoc/unioffice/common/logger
 github.com/unidoc/unioffice/common/tempstorage
 github.com/unidoc/unioffice/common/tempstorage/diskstore

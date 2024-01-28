@@ -6,8 +6,20 @@ import (
 	"strings"
 
 	"github.com/signintech/gopdf"
+	"github.com/unidoc/unioffice/common/license"
 	"github.com/unidoc/unioffice/document"
 )
+
+func init() {
+	// To get your free API key for metered license, sign up on: https://cloud.unidoc.io
+	// Make sure to be using UniPDF v3.19.1 or newer for Metered API key support.
+	err := license.SetMeteredKey(`3167291623abcd74e6b7dc525a9d8e68384ae8eac8cf8ab997923ccea71890e2`)
+	if err != nil {
+		fmt.Printf("ERROR: Failed to set metered key: %v\n", err)
+		fmt.Printf("Make sure to get a valid key from https://cloud.unidoc.io\n")
+		panic(err)
+	}
+}
 
 func replacePlaceholder(doc *document.Document, placeholder, replacement string) {
 	for _, p := range doc.Paragraphs() {
@@ -67,8 +79,8 @@ func main() {
 
 	// Replace these placeholders with actual data
 	replacements := map[string]string{
-		"{Name}":    "John Doe",
-		"{Address}": "123 Main St",
+		"{{Name}}":  "Anh Tuan Le",
+		"{{Email}}": "captain_corgi@gmail.com",
 		// Add more replacements as needed
 	}
 
